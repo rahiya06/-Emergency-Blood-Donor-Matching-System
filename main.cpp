@@ -1,417 +1,340 @@
+```cpp
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
-#include <vector>
 #include <limits>
+#include <algorithm>
 #include <cctype>
+
 using namespace std;
 
-// Class to store donor information
-class Donor
-{
+class Donor {
 private:
     int id;
     string name;
     int age;
     string bloodGroup;
-    string contact;
+    string phone;
     string city;
     bool available;
 
 public:
-    // Constructor
-    Donor(int i, string n, int a, string bg,
-          string c, string ct, bool av)
-    {
-        id = i;
-        name = n;
-        age = a;
-        bloodGroup = bg;
-        contact = c;
-        city = ct;
-        available = av;
+    Donor() {
+        id = 0;
+        age = 0;
+        available = true;
     }
 
-    // Getter functions
-    int getId() const
-    {
-        return id;
-    }
+    void input(int donorId) {
+        id = donorId;
 
-    string getBloodGroup() const
-    {
-        return bloodGroup;
-    }
-
-    bool isAvailable() const
-    {
-        return available;
-    }
-
-    // Display donor details
-    void display() const
-    {
-        cout << "\nDonor ID: " << id;
-        cout << "\nName: " << name;
-        cout << "\nAge: " << age;
-        cout << "\nBlood Group: " << bloodGroup;
-        cout << "\nContact: " << contact;
-        cout << "\nCity: " << city;
-        cout << "\nAvailability: "
-             << (available ? "Available" : "Unavailable");
-        cout << "\n-----------------------------\n";
-    }
-
-    // Save donor details to a file
-    void saveToFile(ofstream &file) const
-    {
-        file << id << "|"
-             << name << "|"
-             << age << "|"
-             << bloodGroup << "|"
-             << contact << "|"
-             << city << "|"
-             << available << "\n";
-    }
-
-    // Load donor details from a file
-    static bool readFromFile(ifstream &file, Donor &d)
-    {
-        string line;
-
-        if (!getline(file, line))
-            return false;
-
-        stringstream ss(line);
-
-        string idStr, name, ageStr, bg;
-        string contact, city, avStr;
-
-        if (!getline(ss, idStr, '|') ||
-            !getline(ss, name, '|') ||
-            !getline(ss, ageStr, '|') ||
-            !getline(ss, bg, '|') ||
-            !getline(ss, contact, '|') ||
-            !getline(ss, city, '|') ||
-            !getline(ss, avStr))
-        {
-            return false;
-        }
-
-        try
-        {
-            int id = stoi(idStr);
-            int age = stoi(ageStr);
-            bool available = (avStr == "1");
-
-            d = Donor(id, name, age, bg,
-                      contact, city, available);
-
-            return true;
-        }
-        catch (...)
-        {
-            return false;
-        }
-    }
-
-    // Default constructor for loading records
-    Donor() : id(0), age(0), available(false) {}
-};
-
-
-// Class to manage the donor system
-class BloodDonorSystem
-{
-private:
-    vector<Donor> donors;
-    string filename;
-
-    // Load saved records
-    void loadDonors()
-    {
-        donors.clear();
-
-        ifstream file(filename.c_str());
-
-        if (!file)
-            return;
-
-        Donor d;
-
-        while (Donor::readFromFile(file, d))
-        {
-            donors.push_back(d);
-        }
-
-        file.close();
-    }
-
-    // Save all records
-    void saveDonors()
-    {
-        ofstream file(filename.c_str());
-
-        if (!file)
-        {
-            cout << "Error saving donor records!\n";
-            return;
-        }
-
-        for (size_t i = 0; i < donors.size(); i++)
-        {
-            donors[i].saveToFile(file);
-        }
-
-        file.close();
-    }
-
-    // Check whether a blood group is valid
-    bool validBloodGroup(string bg)
-    {
-        string groups[] = {
-            "A+", "A-", "B+", "B-",
-            "AB+", "AB-", "O+", "O-"
-        };
-
-        for (int i = 0; i < 8; i++)
-        {
-            if (bg == groups[i])
-                return true;
-        }
-
-        return false;
-    }
-
-    // Generate the next donor ID
-    int generateID()
-    {
-        int maxID = 0;
-
-        for (size_t i = 0; i < donors.size(); i++)
-        {
-            if (donors[i].getId() > maxID)
-                maxID = donors[i].getId();
-        }
-
-        return maxID + 1;
-    }
-
-public:
-    // Constructor
-    BloodDonorSystem()
-    {
-        filename = "donors.txt";
-        loadDonors();
-    }
-
-    // Register a new donor
-    void addDonor()
-    {
-        string name, bg, contact, city;
-        int age;
-        char choice;
-
-        cout << "\n--- Register New Donor ---\n";
-
-        cout << "Enter donor name: ";
+        cout << "\nEnter donor name: ";
         getline(cin, name);
 
-        if (name.empty() || name.find('|') != string::npos)
-        {
-            cout << "Invalid name!\n";
-            return;
-        }
+        while (true) {
+            cout << "Enter age: ";
 
-        cout << "Enter age: ";
+            if (cin >> age && age >= 18 && age <= 100) {
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                break;
+            }
 
-        if (!(cin >> age))
-        {
-            cout << "Invalid age!\n";
+            cout << "Please enter a valid age (18-100).\n";
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            return;
-        }
-
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-        if (age < 18 || age > 100)
-        {
-            cout << "Please enter an age between 18 and 100.\n";
-            return;
         }
 
         cout << "Enter blood group (A+, A-, B+, B-, AB+, AB-, O+, O-): ";
-        getline(cin, bg);
+        getline(cin, bloodGroup);
 
-        // Convert blood group to uppercase
-        for (size_t i = 0; i < bg.length(); i++)
-        {
-            bg[i] = toupper(static_cast<unsigned char>(bg[i]));
-        }
+        transform(bloodGroup.begin(), bloodGroup.end(),
+                  bloodGroup.begin(),
+                  [](unsigned char c) { return toupper(c); });
 
-        if (!validBloodGroup(bg))
-        {
-            cout << "Invalid blood group!\n";
-            return;
-        }
-
-        cout << "Enter contact number: ";
-        getline(cin, contact);
+        cout << "Enter phone number: ";
+        getline(cin, phone);
 
         cout << "Enter city: ";
         getline(cin, city);
 
-        if (contact.empty() || city.empty() ||
-            contact.find('|') != string::npos ||
-            city.find('|') != string::npos)
-        {
-            cout << "Invalid contact number or city!\n";
-            return;
-        }
-
+        char choice;
         cout << "Is the donor currently available? (Y/N): ";
         cin >> choice;
-
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        bool available =
-            (choice == 'Y' || choice == 'y');
+        available = (toupper(static_cast<unsigned char>(choice)) == 'Y');
+    }
 
-        int id = generateID();
+    void display() const {
+        cout << "\nDonor ID: " << id
+             << "\nName: " << name
+             << "\nAge: " << age
+             << "\nBlood Group: " << bloodGroup
+             << "\nPhone: " << phone
+             << "\nCity: " << city
+             << "\nAvailability: "
+             << (available ? "Available" : "Not Available")
+             << "\n-----------------------------\n";
+    }
 
-        Donor d(id, name, age, bg,
-                contact, city, available);
+    bool matchesBloodGroup(const string& group) const {
+        return bloodGroup == group;
+    }
 
-        donors.push_back(d);
+    bool isAvailable() const {
+        return available;
+    }
+
+    int getId() const {
+        return id;
+    }
+
+    void save(ofstream& file) const {
+        file << id << '|'
+             << name << '|'
+             << age << '|'
+             << bloodGroup << '|'
+             << phone << '|'
+             << city << '|'
+             << available << '\n';
+    }
+
+    bool load(ifstream& file) {
+        string line;
+
+        if (!getline(file, line, '|'))
+            return false;
+
+        try {
+            id = stoi(line);
+        } catch (...) {
+            return false;
+        }
+
+        if (!getline(file, name, '|'))
+            return false;
+
+        string ageText;
+
+        if (!getline(file, ageText, '|'))
+            return false;
+
+        try {
+            age = stoi(ageText);
+        } catch (...) {
+            return false;
+        }
+
+        if (!getline(file, bloodGroup, '|'))
+            return false;
+
+        if (!getline(file, phone, '|'))
+            return false;
+
+        if (!getline(file, city, '|'))
+            return false;
+
+        string availabilityText;
+
+        if (!getline(file, availabilityText))
+            return false;
+
+        available = (availabilityText == "1");
+
+        return true;
+    }
+};
+
+class BloodDonorSystem {
+private:
+    static const int MAX_DONORS = 500;
+    Donor donors[MAX_DONORS];
+    int count;
+
+    const string filename = "donors.txt";
+
+    void loadDonors() {
+        ifstream file(filename.c_str());
+
+        if (!file.is_open())
+            return;
+
+        Donor donor;
+
+        while (count < MAX_DONORS && donor.load(file)) {
+            donors[count] = donor;
+            count++;
+        }
+
+        file.close();
+    }
+
+    void saveDonors() const {
+        ofstream file(filename.c_str());
+
+        if (!file.is_open()) {
+            cout << "Error: Could not save donor records.\n";
+            return;
+        }
+
+        for (int i = 0; i < count; i++) {
+            donors[i].save(file);
+        }
+
+        file.close();
+    }
+
+    string getBloodGroup() {
+        string group;
+
+        cout << "Enter blood group to search: ";
+        getline(cin, group);
+
+        transform(group.begin(), group.end(),
+                  group.begin(),
+                  [](unsigned char c) { return toupper(c); });
+
+        return group;
+    }
+
+public:
+    BloodDonorSystem() {
+        count = 0;
+        loadDonors();
+    }
+
+    void addDonor() {
+        if (count >= MAX_DONORS) {
+            cout << "\nDonor storage is full!\n";
+            return;
+        }
+
+        Donor donor;
+        donor.input(count + 1);
+
+        donors[count] = donor;
+        count++;
+
         saveDonors();
 
-        cout << "\nDonor registered successfully!";
-        cout << "\nAssigned Donor ID: " << id << "\n";
+        cout << "\nDonor added successfully!\n";
     }
 
-    // Display all donors
-    void viewDonors()
-    {
-        loadDonors();
-
-        cout << "\n--- Registered Donors ---\n";
-
-        if (donors.empty())
-        {
-            cout << "No donor records found.\n";
+    void searchDonor() {
+        // Check whether any records exist before asking for input.
+        if (count == 0) {
+            cout << "\nNo donor records found!\n";
             return;
         }
 
-        for (size_t i = 0; i < donors.size(); i++)
-        {
-            donors[i].display();
-        }
-    }
-
-    // Search for available donors
-    void searchDonors()
-    {
-        string bg;
-
-        cout << "\n--- Search Available Donors ---\n";
-
-        cout << "Enter required blood group: ";
-        getline(cin, bg);
-
-        for (size_t i = 0; i < bg.length(); i++)
-        {
-            bg[i] = toupper(static_cast<unsigned char>(bg[i]));
-        }
-
-        if (!validBloodGroup(bg))
-        {
-            cout << "Invalid blood group!\n";
-            return;
-        }
-
-        loadDonors();
-
+        string group = getBloodGroup();
         bool found = false;
 
-        for (size_t i = 0; i < donors.size(); i++)
-        {
-            if (donors[i].getBloodGroup() == bg &&
-                donors[i].isAvailable())
-            {
+        for (int i = 0; i < count; i++) {
+            if (donors[i].matchesBloodGroup(group)) {
                 donors[i].display();
                 found = true;
             }
         }
 
-        if (!found)
-        {
-            cout << "\nNo available donors found for "
-                 << bg << ".\n";
+        if (!found) {
+            cout << "\nNo donors found for blood group "
+                 << group << "!\n";
         }
     }
 
-    // Main menu
-    void menu()
-    {
+    void displayAllDonors() const {
+        if (count == 0) {
+            cout << "\nNo donor records found!\n";
+            return;
+        }
+
+        cout << "\n========== ALL DONORS ==========\n";
+
+        for (int i = 0; i < count; i++) {
+            donors[i].display();
+        }
+    }
+
+    void searchAvailableDonors() {
+        if (count == 0) {
+            cout << "\nNo donor records found!\n";
+            return;
+        }
+
+        string group = getBloodGroup();
+        bool found = false;
+
+        for (int i = 0; i < count; i++) {
+            if (donors[i].matchesBloodGroup(group) &&
+                donors[i].isAvailable()) {
+                donors[i].display();
+                found = true;
+            }
+        }
+
+        if (!found) {
+            cout << "\nNo available donors found for blood group "
+                 << group << "!\n";
+        }
+    }
+
+    void run() {
         int choice;
 
-        do
-        {
-            cout << "\n================================\n";
-            cout << " EMERGENCY BLOOD DONOR SYSTEM\n";
-            cout << "================================\n";
-            cout << "1. Register New Donor\n";
-            cout << "2. View All Donors\n";
-            cout << "3. Search Available Donors\n";
-            cout << "4. Exit\n";
+        while (true) {
+            cout << "\n========================================\n";
+            cout << "   EMERGENCY BLOOD DONOR MATCHING SYSTEM\n";
+            cout << "========================================\n";
+            cout << "1. Add New Donor\n";
+            cout << "2. Search Donors by Blood Group\n";
+            cout << "3. Display All Donors\n";
+            cout << "4. Search Available Donors\n";
+            cout << "5. Exit\n";
+            cout << "========================================\n";
             cout << "Enter your choice: ";
 
-            if (!(cin >> choice))
-            {
-                cout << "Please enter a valid number.\n";
+            if (!(cin >> choice)) {
+                cout << "\nInvalid input! Please enter a number.\n";
                 cin.clear();
-                cin.ignore(
-                    numeric_limits<streamsize>::max(), '\n');
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 continue;
             }
 
-            cin.ignore(
-                numeric_limits<streamsize>::max(), '\n');
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-            switch (choice)
-            {
+            switch (choice) {
                 case 1:
                     addDonor();
                     break;
 
                 case 2:
-                    viewDonors();
+                    searchDonor();
                     break;
 
                 case 3:
-                    searchDonors();
+                    displayAllDonors();
                     break;
 
                 case 4:
-                    cout << "Thank you for using the system!\n";
+                    searchAvailableDonors();
                     break;
 
-                default:
-                    cout << "Invalid choice! Try again.\n";
-            }
+                case 5:
+                    cout << "\nThank you for using the system!\n";
+                    return;
 
-        } while (choice != 4);
+                default:
+                    cout << "\nInvalid choice! Please select 1-5.\n";
+            }
+        }
     }
 };
 
-
-// Main function
-int main()
-{
+int main() {
     BloodDonorSystem system;
-    system.menu();
+    system.run();
 
     return 0;
 }
+```
